@@ -10,6 +10,12 @@ const isProcessing$ = new BehaviorSubject<boolean>(true);
 const transactions$ = new Subject<any>();
 const data$ = new BehaviorSubject<any>([]);
 
+const trigger = combineLatest(ticker$,isProcessing$).pipe(filter(([_,isProcessing]) => isProcessing))
+const transactionBuffer$ = transactions$.pipe(
+  buffer(trigger),
+  filter(transactions => transactions.length > 0)
+);
+
 const transactions = [
   {type: 'add', data: [{'test': 'test1'}]},
   {type: 'add', data: [{'test': 'test1'}]},
@@ -29,18 +35,10 @@ const transactions = [
   {type: 'add', data: [{'test': 'test1'}]}
 ]
 
-for(let i =0 ; i< transactions.length;i++) {
-  setTimeout(() => {
-    transactions$.next(transactions[i]);
-  }, i*130);
-}
 
-const trigger = combineLatest(ticker$,isProcessing$).pipe(filter(([_,isProcessing]) => isProcessing))
+
 //
-transactions$.pipe(
-  buffer(trigger),
-  filter(transactions => transactions.length > 0)
-).subscribe(trans => {
+transactionBuffer$.subscribe(trans => {
   console.log('Injest Transactions:')
   console.log(trans);
   
@@ -59,5 +57,11 @@ data$.subscribe(data => {
 for(let i =0 ; i< transactions.length;i++) {
   setTimeout(() => {
     transactions$.next(transactions[i]);
-  }, i*1000);
+  }, i*130);
+}
+
+for(let i =0 ; i< transactions.length;i++) {
+  setTimeout(() => {
+    transactions$.next(transactions[i]);
+  }, i*800);
 }
